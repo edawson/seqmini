@@ -1,3 +1,9 @@
 [submodule "mkmh"]
 	path = mkmh
 	url = https://github.com/edawson/mkmh
+[submodule "gfakluge"]
+	path = gfakluge
+	url = https://github.com/edawson/gfakluge
+[submodule "tinyFA"]
+	path = tinyFA
+	url = https://github.com/edawson/tinyFA
