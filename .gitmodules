@@ -7,3 +7,6 @@
 [submodule "tinyFA"]
 	path = tinyFA
 	url = https://github.com/edawson/tinyFA
+[submodule "sdsl"]
+	path = sdsl
+	url = https://github.com/simongog/sdsl
