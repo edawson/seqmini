@@ -160,7 +160,7 @@ namespace sqm{
                 pair_list->emplace(min_pair);
             }
 
-            delete [] hv;
+            delete hv;
         }
         
         return pair_list;
