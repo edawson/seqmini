@@ -103,10 +103,20 @@ namespace sqm{
     };
 
     inline void emit_minimizers_to_binary(sqm_pair_list_t* pairs, char* outfile){
-        ofstream ofi (outfile, ios::out | ios::binary);
+        ofstream ofi;
+        ofi.open(outfile, ios::binary);
 
         if (ofi.good()){
-
+            for (int i = 0; i < pairs->size; ++i){
+                int id_len = strlen(pairs->pairs[i].id);
+                ofi.write((char*)&pairs->pairs[i].min, sizeof(mkmh::hash_t));
+                ofi.write((char*)&id_len, sizeof(int));
+                ofi.write((char*)&pairs->pairs[i].id, id_len * sizeof(char));
+            }
+        }
+        else{
+            cerr << "Couldn't open output file " << outfile << "." << endl;
+            exit(9);
         }
 
         ofi.close();
@@ -156,7 +166,6 @@ namespace sqm{
 
             for (int i = 0; i < hv->size; ++i){
                 sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
-                //cerr << min_pair << endl;
                 pair_list->emplace(min_pair);
             }
 
