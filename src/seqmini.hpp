@@ -40,8 +40,8 @@ namespace sqm{
             id = NULL;
             min = 0;
         };
-        sqm_pair_t(char* id_n, mkmh::hash_t min_n){
-            id = id;
+        sqm_pair_t(char*& id_n, mkmh::hash_t min_n){
+            id = id_n;
             min = min_n;
         };
         friend std::ostream& operator<<(std::ostream& os, sqm_pair_t pt){
@@ -69,8 +69,8 @@ namespace sqm{
             capacity = sz;
             pairs = new sqm_pair_t[capacity];
         };
-        void resize(int factor = 1.3){
-            int newcap = this->capacity * factor;
+        void resize(double factor = 1.3){
+            int newcap = int (this->capacity * factor);
             sqm_pair_t* newpairs = new sqm_pair_t[newcap];
             this->capacity = newcap;
             for (int i = 0; i < this->size; ++i){
@@ -80,11 +80,12 @@ namespace sqm{
             this->pairs = newpairs;
         };
 
-        void emplace(sqm_pair_t p){
+        void emplace(const sqm_pair_t& p){
             if (size == capacity){
                 resize();
             }
-            pairs[size++] = p;
+            *(this->pairs + size) = p;
+            ++size;
         };
     };
 
@@ -130,6 +131,7 @@ namespace sqm{
         TFA::tiny_faidx_t tfi;
         if (!TFA::checkFAIndexFileExists(filename)){
             TFA::createFAIndex(filename, tfi);
+            TFA::writeFAIndex(filename, tfi);
         }
         else{
             TFA::parseFAIndex(filename, tfi);
@@ -139,24 +141,30 @@ namespace sqm{
             // Since we're iterating an internal map, we don't have to check
             // if the sequence is in said map.
             // Copy the name to a fresh pointer
-            char* id = new char[strlen(s.first) + 1];
+            char* id = new char[strlen(s.first) + 2];
             id[ s.second->name_len + 1] = '\0';
             strcpy(id, s.first);
             // Copy the sequence to a new pointer
             char* seq;
-            TFA::getSequence(tfi, id, seq);
+            TFA::getSequence(tfi, s.first, seq);
             mkmh::mkmh_hash_vec* hv = new mkmh::mkmh_hash_vec(100);
             mkmh::minimizers(seq, s.second->seq_len, 21, 30, hv);
+            //#ifdef DEBUG
+            //cerr << hv->size << endl;
+            //#endif
 
             for (int i = 0; i < hv->size; ++i){
                 sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
-                pair_list->emplace(min_pair);
+                cerr << min_pair << endl;
+                //pair_list->emplace(min_pair);
             }
         }
         return pair_list;
     };
 
     inline sqm_pair_list_t* minimizers_from_gfa(char* filename);
+
+    inline sqm_pair_list_t* minimizers_from_fastq(char* filename);
 
     inline sqm_pair_list_t* read_binary_pair_file(char* filename);
 
