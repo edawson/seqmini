@@ -46,6 +46,7 @@ namespace sqm{
         };
         friend std::ostream& operator<<(std::ostream& os, sqm_pair_t pt){
             os << pt.min << '\t' << pt.id;
+            return os;
         };
     };
 
@@ -155,10 +156,13 @@ namespace sqm{
 
             for (int i = 0; i < hv->size; ++i){
                 sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
-                cerr << min_pair << endl;
-                //pair_list->emplace(min_pair);
+                //cerr << min_pair << endl;
+                pair_list->emplace(min_pair);
             }
+
+            delete [] hv;
         }
+        
         return pair_list;
     };
 
