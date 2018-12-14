@@ -40,6 +40,9 @@ namespace sqm{
             id = NULL;
             min = 0;
         };
+        ~sqm_pair_t(){
+            //delete [] id;
+        };
         sqm_pair_t(char*& id_n, mkmh::hash_t min_n){
             id = id_n;
             min = min_n;
@@ -69,6 +72,9 @@ namespace sqm{
             size = 0;
             capacity = sz;
             pairs = new sqm_pair_t[capacity];
+        };
+        ~sqm_pair_list_t(){
+            delete [] pairs;
         };
         void resize(double factor = 1.3){
             int newcap = int (this->capacity * factor);
@@ -135,7 +141,10 @@ namespace sqm{
         ofi.close();
     };
 
-    inline sqm_pair_list_t* minimizers_from_fasta(char* filename){
+    inline sqm_pair_list_t* minimizers_from_fasta(const char* filename,
+        int k = 16,
+        int w = 20,
+        bool stream_out = false){
 
         sqm::sqm_pair_list_t* pair_list = new sqm::sqm_pair_list_t(200);
 
@@ -159,14 +168,20 @@ namespace sqm{
             char* seq;
             TFA::getSequence(tfi, s.first, seq);
             mkmh::mkmh_hash_vec* hv = new mkmh::mkmh_hash_vec(100);
-            mkmh::minimizers(seq, s.second->seq_len, 21, 30, hv);
+            mkmh::minimizers(seq, s.second->seq_len, k, w, hv);
             //#ifdef DEBUG
             //cerr << hv->size << endl;
             //#endif
 
             for (int i = 0; i < hv->size; ++i){
-                sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
-                pair_list->emplace(min_pair);
+                if (stream_out){
+                    cout << hv->hashes[i] << '\t' << id << endl;
+                }
+                else{
+                    sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
+                    pair_list->emplace(min_pair);
+                }
+
             }
 
             delete hv;
@@ -175,7 +190,11 @@ namespace sqm{
         return pair_list;
     };
 
-    inline sqm_pair_list_t* minimizers_from_gfa(char* filename, bool seqsOnly = false){
+    inline sqm_pair_list_t* minimizers_from_gfa(const char* filename, 
+    int k = 16, 
+    int w = 20,
+     bool seqsOnly = true,
+      bool emit_to_stream = true){
         gfak::GFAKluge gg;
         gg.parse_gfa_file(filename);
         sqm::sqm_pair_list_t* pair_list = new sqm::sqm_pair_list_t(200);
@@ -198,8 +217,14 @@ namespace sqm{
 
 
                 for (int i = 0; i < hv->size; ++i){
-                    sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
-                    pair_list->emplace(min_pair);
+                    if (emit_to_stream){
+                        cout << hv->hashes[i] << '\t' << id << endl;
+                    }
+                    else{
+                        sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
+                        pair_list->emplace(min_pair);
+                    }
+
                 }
             }
         }
@@ -209,7 +234,7 @@ namespace sqm{
     return pair_list;
     };
 
-    inline sqm_pair_list_t* minimizers_from_fastq(char* filename){
+    inline sqm_pair_list_t* minimizers_from_fastq(const char* filename, bool emit_to_stream = true){
         sqm::sqm_pair_list_t* pair_list = new sqm::sqm_pair_list_t(200);
 
         TFA::tiny_faidx_t tfi;
@@ -238,8 +263,14 @@ namespace sqm{
             //#endif
 
             for (int i = 0; i < hv->size; ++i){
-                sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
-                pair_list->emplace(min_pair);
+                if (emit_to_stream){
+                    cout << hv->hashes[i] << '\t' << id << endl;
+                }
+                else{
+                    sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
+                    pair_list->emplace(min_pair);
+                }
+
             }
 
             delete hv;
