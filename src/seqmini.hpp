@@ -175,9 +175,77 @@ namespace sqm{
         return pair_list;
     };
 
-    inline sqm_pair_list_t* minimizers_from_gfa(char* filename);
+    inline sqm_pair_list_t* minimizers_from_gfa(char* filename, bool seqsOnly = false){
+        gfak::GFAKluge gg;
+        gg.parse_gfa_file(filename);
+        sqm::sqm_pair_list_t* pair_list = new sqm::sqm_pair_list_t(200);
 
-    inline sqm_pair_list_t* minimizers_from_fastq(char* filename);
+        // Indexes only the seq lines, without worrying about graph topology
+        if (seqsOnly){
+            map<string, gfak::sequence_elem, gfak::custom_key> name_to_seq = gg.get_name_to_seq();
+            for (auto s : name_to_seq){
+                // Since we're iterating an internal map, we don't have to check
+                // if the sequence is in said map.
+                // Copy the name to a fresh pointer
+                char* id = new char[strlen(s.first.c_str()) + 2];
+                id[ s.second.name.length() + 1] = '\0';
+                strcpy(id, s.first.c_str());
+                // Copy the sequence to a new pointer
+                char* seq;
+                memcpy(seq, s.second.sequence.c_str(), sizeof(char) * s.second.length);
+                mkmh::mkmh_hash_vec* hv = new mkmh::mkmh_hash_vec(100);
+                mkmh::minimizers(seq, s.second.length, 16, 20, hv);
+
+
+                for (int i = 0; i < hv->size; ++i){
+                    sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
+                    pair_list->emplace(min_pair);
+                }
+            }
+        }
+        else{
+
+        }
+    return pair_list;
+    };
+
+    inline sqm_pair_list_t* minimizers_from_fastq(char* filename){
+        sqm::sqm_pair_list_t* pair_list = new sqm::sqm_pair_list_t(200);
+
+        TFA::tiny_faidx_t tfi;
+        if (!TFA::checkFAIndexFileExists(filename)){
+            TFA::createFAIndex(filename, tfi);
+            TFA::writeFAIndex(filename, tfi);
+        }
+        else{
+            TFA::parseFAIndex(filename, tfi);
+        }
+
+        for (auto s : tfi.seq_to_entry){
+            // Since we're iterating an internal map, we don't have to check
+            // if the sequence is in said map.
+            // Copy the name to a fresh pointer
+            char* id = new char[strlen(s.first) + 2];
+            id[ s.second->name_len + 1] = '\0';
+            strcpy(id, s.first);
+            // Copy the sequence to a new pointer
+            char* seq;
+            TFA::getSequence(tfi, s.first, seq);
+            mkmh::mkmh_hash_vec* hv = new mkmh::mkmh_hash_vec(100);
+            mkmh::minimizers(seq, s.second->seq_len, 21, 30, hv);
+            //#ifdef DEBUG
+            //cerr << hv->size << endl;
+            //#endif
+
+            for (int i = 0; i < hv->size; ++i){
+                sqm::sqm_pair_t min_pair(id, hv->hashes[i]);
+                pair_list->emplace(min_pair);
+            }
+
+            delete hv;
+        }
+        return pair_list;
+    };
 
     inline sqm_pair_list_t* read_binary_pair_file(char* filename);
 
