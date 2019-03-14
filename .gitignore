@@ -4,3 +4,5 @@
 .vscode
 *.gfa
 *.gfai
+*.fai
+*.txt
