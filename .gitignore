@@ -6,3 +6,5 @@
 *.gfai
 *.fai
 *.txt
+seqmini
+*.dSYM
